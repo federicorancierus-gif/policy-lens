@@ -158,6 +158,163 @@ export const demoComparisonQuote: ComparisonQuoteInput = {
     "Cheaper headline price, but it trims liability and removes rental reimbursement.",
 };
 
+export const sampleScannedPolicyAnalysis: PolicyAnalysis = {
+  carrierName: "GEICO",
+  policyPeriod: "04/01/2026 to 10/01/2026",
+  vehicles: [
+    {
+      year: 2021,
+      make: "Toyota",
+      model: "Camry SE",
+    },
+  ],
+  coverages: [
+    {
+      type: "bodilyInjuryLiability",
+      label: "Bodily injury liability",
+      limitOrDeductible: "$50,000 / $100,000",
+      status: "limited",
+      plainEnglishExplanation:
+        "Pays for injuries you cause to someone else when you are at fault. Higher limits mean less risk that a serious crash spills into your own savings.",
+      rawValue: "Bodily Injury Liability: $50,000 / $100,000",
+    },
+    {
+      type: "propertyDamageLiability",
+      label: "Property damage liability",
+      limitOrDeductible: "$50,000",
+      status: "limited",
+      plainEnglishExplanation:
+        "Pays for damage you cause to other cars, fences, buildings, and similar property. Low limits can run out quickly in a multi-car or newer-vehicle crash.",
+      rawValue: "Property Damage Liability: $50,000",
+    },
+    {
+      type: "uninsuredMotorist",
+      label: "Uninsured / underinsured motorist",
+      limitOrDeductible: "Not included",
+      status: "missing",
+      plainEnglishExplanation:
+        "Helps when another driver hits you and either has no insurance or not enough of it. This matters more than people expect because many drivers are underinsured.",
+      rawValue: "Uninsured Motorist: Not Included",
+    },
+    {
+      type: "collision",
+      label: "Collision",
+      limitOrDeductible: "$1,000 deductible",
+      status: "included",
+      plainEnglishExplanation:
+        "Pays to repair your car after a crash, regardless of fault, after you pay your deductible.",
+      rawValue: "Collision Deductible: $1,000",
+    },
+    {
+      type: "comprehensive",
+      label: "Comprehensive",
+      limitOrDeductible: "$500 deductible",
+      status: "included",
+      plainEnglishExplanation:
+        "Covers non-crash damage such as theft, hail, vandalism, falling objects, or animal strikes, after your deductible.",
+      rawValue: "Comprehensive Deductible: $500",
+    },
+    {
+      type: "roadsideAssistance",
+      label: "Roadside assistance",
+      limitOrDeductible: "Not included",
+      status: "missing",
+      plainEnglishExplanation:
+        "Helps with towing, jump starts, flat tires, lockouts, and similar roadside emergencies.",
+      rawValue: "Roadside Assistance: Not Included",
+    },
+    {
+      type: "rentalReimbursement",
+      label: "Rental reimbursement",
+      limitOrDeductible: "$40/day up to $1,200",
+      status: "included",
+      plainEnglishExplanation:
+        "Helps pay for a rental car while your covered vehicle is being repaired after a claim.",
+      rawValue: "Rental Reimbursement: $40/day up to $1,200",
+    },
+    {
+      type: "medicalPayments",
+      label: "Medical payments / PIP",
+      limitOrDeductible: "$5,000",
+      status: "included",
+      plainEnglishExplanation:
+        "Helps cover immediate medical expenses for you and passengers after an accident, depending on the state and policy structure.",
+      rawValue: "Medical Payments: $5,000",
+    },
+  ],
+  deductibles: [
+    {
+      type: "Collision",
+      amount: "$1,000",
+      note: "This is what you would pay out of pocket before collision coverage starts helping.",
+    },
+    {
+      type: "Comprehensive",
+      amount: "$500",
+      note: "This is what you would pay before coverage helps with theft, hail, glass, or similar non-collision claims.",
+    },
+  ],
+  exclusions: [
+    {
+      label: "Wear and tear or mechanical breakdown is not covered.",
+      plainEnglishExplanation:
+        "This line looks like policy fine print or a limitation. Treat it as something worth double-checking before you rely on coverage in that situation.",
+    },
+  ],
+  gapFlags: [
+    {
+      title: "Liability limits may leave personal savings exposed",
+      severity: "medium",
+      whyItMatters:
+        "Medical bills and attorney costs can run past low liability limits fast, especially when newer cars or multiple people are involved.",
+      suggestedAction:
+        "Model at least $100,000 / $300,000 bodily injury limits so the user can see the price difference against stronger protection.",
+    },
+    {
+      title: "Property damage limit is on the thin side",
+      severity: "medium",
+      whyItMatters:
+        "One damaged SUV, EV, storefront, or highway barrier can exceed a low property damage cap.",
+      suggestedAction:
+        "Compare the current limit against a $100,000 or $250,000 option to show whether the premium tradeoff is worth it.",
+    },
+    {
+      title: "No uninsured / underinsured motorist coverage found",
+      severity: "medium",
+      whyItMatters:
+        "If another driver has little or no coverage, the policyholder may have to absorb more of the financial hit themselves.",
+      suggestedAction:
+        "Ask for UM/UIM options that track the liability limits when the state allows it.",
+    },
+    {
+      title: "No roadside assistance",
+      severity: "low",
+      whyItMatters:
+        "This does not break the policy, but it removes help for towing, jump starts, and lockouts when stress is already high.",
+      suggestedAction:
+        "Show the add-on cost next to the price of a single tow so the tradeoff feels concrete.",
+    },
+    {
+      title: "Collision deductible may be painful in a real claim",
+      severity: "medium",
+      whyItMatters:
+        "A high deductible lowers premium now but can feel brutal when cash is tight after a crash.",
+      suggestedAction:
+        "Offer a side-by-side quote with a $500 deductible so the user can judge whether the monthly savings are worth the claim risk.",
+    },
+  ],
+  plainEnglishSummary:
+    "This scanned GEICO sample resolves to the same key protection story: physical damage coverage is present, but liability is still leaner than ideal and uninsured motorist protection is missing.",
+  confidence: "medium",
+  extractionNotes: [
+    "Verified sample fallback loaded so the scanned demo stays reliable even if OCR is unavailable in the current environment.",
+    "The source document for this result is the built-in image-based sample declarations page.",
+  ],
+  currentMonthlyPremium: 118,
+  protectionScore: 22,
+  textLength: 577,
+};
+
 export const demoQuoteComparison = compareQuote(
   demoPolicyAnalysis,
   demoPolicyAnalysis.currentMonthlyPremium ?? 118,

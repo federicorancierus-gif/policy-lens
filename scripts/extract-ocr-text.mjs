@@ -1,10 +1,13 @@
-import { readFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { mkdir, readFile } from "node:fs/promises";
 
 import { pdf } from "pdf-to-img";
 import { createWorker, OEM, PSM } from "tesseract.js";
 
 const MAX_OCR_PAGES = 3;
 const OCR_SCALE = 2.2;
+const OCR_CACHE_PATH = path.join(os.tmpdir(), "policy-lens-tesseract-cache");
 
 async function main() {
   const pdfPath = process.argv[2];
@@ -15,7 +18,10 @@ async function main() {
 
   const pdfBuffer = await readFile(pdfPath);
   const document = await pdf(pdfBuffer, { scale: OCR_SCALE });
-  const worker = await createWorker("eng", OEM.LSTM_ONLY);
+  await mkdir(OCR_CACHE_PATH, { recursive: true });
+  const worker = await createWorker("eng", OEM.LSTM_ONLY, {
+    cachePath: OCR_CACHE_PATH,
+  });
   const pages = [];
   let processedPages = 0;
 

@@ -5,7 +5,69 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 
 const MIN_TEXT_LENGTH_FOR_DIRECT_PARSE = 160;
 const OCR_HELPER_TIMEOUT_MS = 120_000;
-const OCR_HELPER_PATH = path.join(process.cwd(), "scripts", "extract-ocr-text.mjs");
+const OCR_HELPER_SOURCE = String.raw`
+(async () => {
+  require("regenerator-runtime/runtime");
+  const os = require("node:os");
+  const path = require("node:path");
+  const { mkdir, readFile } = require("node:fs/promises");
+  const { pdf } = await import("pdf-to-img");
+  const { createWorker, OEM, PSM } = await import("tesseract.js");
+
+  const pdfPath = process.argv[1];
+  const cachePath = path.join(os.tmpdir(), "policy-lens-tesseract-cache");
+  await mkdir(cachePath, { recursive: true });
+
+  const pdfBuffer = await readFile(pdfPath);
+  const document = await pdf(pdfBuffer, { scale: 2.2 });
+  const worker = await createWorker("eng", OEM.LSTM_ONLY, {
+    cachePath,
+  });
+
+  const pages = [];
+  let processedPages = 0;
+
+  try {
+    await worker.setParameters({
+      tessedit_pageseg_mode: PSM.AUTO,
+      preserve_interword_spaces: "1",
+    });
+
+    for await (const image of document) {
+      processedPages += 1;
+      const result = await worker.recognize(
+        image,
+        { rotateAuto: true },
+        { text: true },
+      );
+
+      const pageText = result.data.text
+        .replace(/\r/g, "\n")
+        .replace(/[^\S\r\n]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+
+      if (pageText) {
+        pages.push(pageText);
+      }
+
+      if (processedPages >= 3) {
+        break;
+      }
+    }
+  } finally {
+    await worker.terminate().catch(() => undefined);
+  }
+
+  process.stdout.write(JSON.stringify({
+    processedPages,
+    text: pages.join("\n\n"),
+  }));
+})().catch((error) => {
+  console.error(error instanceof Error ? error.message : "OCR helper failed.");
+  process.exit(1);
+});
+`;
 
 type OcrResult = {
   processedPages: number;
@@ -31,7 +93,7 @@ export async function extractPdfTextWithOcr(pdfBuffer: Buffer): Promise<OcrResul
 
 function runOcrHelper(pdfPath: string): Promise<OcrResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [OCR_HELPER_PATH, pdfPath], {
+    const child = spawn(process.execPath, ["-e", OCR_HELPER_SOURCE, pdfPath], {
       cwd: process.cwd(),
       stdio: ["ignore", "pipe", "pipe"],
     });

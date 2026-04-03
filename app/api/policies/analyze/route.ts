@@ -49,59 +49,73 @@ export async function POST(request: Request) {
     );
   }
 
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
-  let text = "";
-  let parseIssue: string | undefined;
-  let parser: PDFParse | null = null;
-  let ocrPages = 0;
-  let usedOcr = false;
-
   try {
-    parser = new PDFParse({ data: fileBuffer });
-    const result = await parser.getText();
-    text = result.text ?? "";
-  } catch {
-    parseIssue =
-      "The PDF parser could not fully read this file, so the app is falling back to a conservative low-confidence summary.";
-  } finally {
-    if (parser) {
-      await parser.destroy().catch(() => undefined);
-    }
-  }
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    let text = "";
+    let parseIssue: string | undefined;
+    let parser: PDFParse | null = null;
+    let ocrPages = 0;
+    let usedOcr = false;
 
-  if (shouldUseOcrFallback(text)) {
     try {
-      const ocrResult = await extractPdfTextWithOcr(fileBuffer);
-
-      if (ocrResult.text.trim()) {
-        text = [text.trim(), ocrResult.text].filter(Boolean).join("\n\n");
-        ocrPages = ocrResult.processedPages;
-        usedOcr = true;
-        parseIssue = undefined;
-      }
+      parser = new PDFParse({ data: fileBuffer });
+      const result = await parser.getText();
+      text = result.text ?? "";
     } catch {
-      if (!text.trim()) {
-        parseIssue =
-          "This PDF appears to be scanned or image-based, and OCR could not recover enough text to summarize it confidently.";
+      parseIssue =
+        "The PDF parser could not fully read this file, so the app is falling back to a conservative low-confidence summary.";
+    } finally {
+      if (parser) {
+        await parser.destroy().catch(() => undefined);
       }
     }
-  }
 
-  const analysis = analyzePolicyDocument({
-    fileName: file.name,
-    text,
-    parseIssue,
-  });
+    if (shouldUseOcrFallback(text)) {
+      try {
+        const ocrResult = await extractPdfTextWithOcr(fileBuffer);
 
-  if (usedOcr) {
-    analysis.extractionNotes.unshift(
-      `OCR reviewed ${ocrPages} page${ocrPages === 1 ? "" : "s"} because the PDF looked scanned or lightly searchable.`,
-    );
+        if (ocrResult.text.trim()) {
+          text = [text.trim(), ocrResult.text].filter(Boolean).join("\n\n");
+          ocrPages = ocrResult.processedPages;
+          usedOcr = true;
+          parseIssue = undefined;
+        }
+      } catch (error) {
+        console.error("OCR fallback failed", error);
 
-    if (analysis.confidence === "high") {
-      analysis.confidence = "medium";
+        if (!text.trim()) {
+          parseIssue =
+            "This PDF appears to be scanned or image-based, and OCR could not recover enough text to summarize it confidently.";
+        }
+      }
     }
-  }
 
-  return Response.json(analysis);
+    const analysis = analyzePolicyDocument({
+      fileName: file.name,
+      text,
+      parseIssue,
+    });
+
+    if (usedOcr) {
+      analysis.extractionNotes.unshift(
+        `OCR reviewed ${ocrPages} page${ocrPages === 1 ? "" : "s"} because the PDF looked scanned or lightly searchable.`,
+      );
+
+      if (analysis.confidence === "high") {
+        analysis.confidence = "medium";
+      }
+    }
+
+    return Response.json(analysis);
+  } catch (error) {
+    console.error("Policy analysis failed", error);
+
+    return Response.json(
+      {
+        error:
+          "The policy could not be analyzed right now. Please try again in a moment.",
+      },
+      { status: 500 },
+    );
+  }
 }

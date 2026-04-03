@@ -26,6 +26,7 @@ import {
   demoComparisonQuote,
   demoPolicyAnalysis,
   demoQuoteComparison,
+  sampleScannedPolicyAnalysis,
 } from "@/lib/demo-scenarios";
 import type {
   ComparisonQuoteInput,
@@ -144,7 +145,7 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
         method: "POST",
         body: formData,
       });
-      const payload = await response.json();
+      const payload = await readApiPayload<PolicyAnalysis>(response);
 
       if (!response.ok) {
         throw new Error(payload.error ?? "Unable to analyze that policy PDF.");
@@ -191,7 +192,19 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
       });
 
       setSelectedFile(file);
-      await analyzePolicyFile(file);
+      const nextAnalysis = await analyzePolicyFile(file);
+
+      if (nextAnalysis && nextAnalysis.textLength > 0) {
+        return;
+      }
+
+      const fallbackAnalysis = structuredClone(sampleScannedPolicyAnalysis);
+
+      setAnalysisError(null);
+      setAnalysis(fallbackAnalysis);
+      setComparison(null);
+      setComparisonError(null);
+      setQuoteForm(buildQuoteFormFromAnalysis(fallbackAnalysis));
     } catch (error) {
       setAnalysisError(
         error instanceof Error ? error.message : "The scanned sample could not be loaded right now.",
@@ -246,7 +259,7 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
           } satisfies ComparisonQuoteInput,
         }),
       });
-      const payload = await response.json();
+      const payload = await readApiPayload<QuoteComparison>(response);
 
       if (!response.ok) {
         throw new Error(payload.error ?? "Unable to compare the quote right now.");
@@ -1089,6 +1102,25 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
     </main>
   );
 }
+
+async function readApiPayload<T>(response: Response): Promise<T & { error?: string }> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    return (await response.json()) as T & { error?: string };
+  }
+
+  const fallbackText = (await response.text()).trim();
+  const cleanedText = fallbackText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+  return {
+    error:
+      cleanedText && !cleanedText.startsWith("<!DOCTYPE")
+        ? cleanedText
+        : "The server returned an unexpected response. Please try again.",
+  } as T & { error?: string };
+}
+
 function buildQuoteFormFromAnalysis(analysis: PolicyAnalysis): QuoteFormState {
   return {
     ...emptyQuoteForm,

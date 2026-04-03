@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
       "./node_modules/pdfjs-dist/**/*",
       "./node_modules/tesseract.js/**/*",
       "./node_modules/tesseract.js-core/**/*",
+      "./node_modules/@napi-rs/**/*",
+      "./node_modules/regenerator-runtime/**/*",
     ],
   },
 };
