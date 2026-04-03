@@ -1,6 +1,6 @@
-﻿# GEICO Policy Decoder MVP
+# Policy Lens
 
-A solo-hackathon Next.js prototype for the Handshake x Codex challenge.
+Policy Lens is a Next.js app that turns a confusing auto policy PDF into a plain-English coverage review.
 
 Upload an auto policy PDF and the app will:
 - translate coverages into plain English
@@ -17,15 +17,16 @@ Upload an auto policy PDF and the app will:
 ## What is implemented
 - `POST /api/policies/analyze`
   - accepts a policy PDF upload
+  - validates file type and size for the prototype
   - extracts searchable text
   - normalizes coverages, deductibles, exclusions, vehicles, and policy period
   - produces confidence labels, a protection score, and gap flags
 - `POST /api/quotes/compare`
   - compares a normalized current policy against a manually entered alternate quote
   - returns price delta, coverage differences, and a final recommendation
-- polished single-page frontend with:
+- polished frontend with:
   - upload flow
-  - demo scenario fallback
+  - sample policy fallback
   - coverage cards
   - risk flags
   - exclusions and extraction notes
@@ -42,9 +43,9 @@ Then open [http://localhost:3000](http://localhost:3000).
 
 ## Notes
 - This is an educational prototype, not legal or underwriting advice.
-- The MVP works best with text-searchable PDFs.
+- The app works best with text-searchable PDFs.
 - If a PDF is image-based or messy, the app falls back to a lower-confidence summary.
-- The repo includes a realistic demo scenario so you can present without a live customer policy.
+- The repo includes a realistic sample scenario so you can try the full experience without a live customer policy.
 
 ## Validation
 ```bash

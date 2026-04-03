@@ -1460,15 +1460,20 @@ function ComparisonSummaryBoard({
   comparison: QuoteComparison;
   coverageCuts: Array<QuoteComparison["coverageDifferences"][number]>;
 }) {
-  const savingsValue =
-    comparison.priceDelta < 0
-      ? currencyFormatter.format(Math.abs(comparison.priceDelta))
-      : currencyFormatter.format(comparison.priceDelta);
+  const priceDeltaLabel = formatPriceDelta(comparison.priceDelta);
   const protectionGap = comparison.currentProtectionScore - comparison.comparisonProtectionScore;
   const executiveHeadline =
     comparison.priceDelta < 0
-      ? `${comparisonLabel} saves ${savingsValue}/mo, but ${currentLabel} stays meaningfully better protected.`
-      : `${currentLabel} keeps the price edge and the stronger protection story.`;
+      ? `${comparisonLabel} saves ${currencyFormatter.format(Math.abs(comparison.priceDelta))}/mo, but ${currentLabel} stays meaningfully better protected.`
+      : comparison.priceDelta > 0
+        ? `${comparisonLabel} costs more and still does not beat ${currentLabel} on protection.`
+        : `${currentLabel} and ${comparisonLabel} land at the same monthly price, so coverage decides the better option.`;
+  const priceDeltaBody =
+    comparison.priceDelta < 0
+      ? `${comparisonLabel} is cheaper each month.`
+      : comparison.priceDelta > 0
+        ? `${comparisonLabel} costs more each month.`
+        : "Both options are priced the same.";
 
   return (
     <div className="rounded-[1.75rem] border border-[var(--panel)]/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(232,248,238,0.94))] p-5 shadow-[0_20px_60px_rgba(12,90,67,0.08)]">
@@ -1488,9 +1493,9 @@ function ComparisonSummaryBoard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <PitchMetric
-          label="Monthly savings"
-          value={comparison.priceDelta < 0 ? formatPriceDelta(comparison.priceDelta) : "$0"}
-          body={`${comparisonLabel} wins on sticker price.`}
+          label="Price delta"
+          value={priceDeltaLabel}
+          body={priceDeltaBody}
         />
         <PitchMetric
           label="Protection gap"

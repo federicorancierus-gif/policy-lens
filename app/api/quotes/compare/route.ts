@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 import { compareQuote } from "@/lib/insurance-engine";
 import type { PolicyAnalysis } from "@/lib/types";
@@ -47,7 +47,17 @@ const compareRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: "The comparison request was not valid JSON." },
+      { status: 400 },
+    );
+  }
+
   const parsed = compareRequestSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -68,4 +78,3 @@ export async function POST(request: Request) {
 
   return Response.json(result);
 }
-
