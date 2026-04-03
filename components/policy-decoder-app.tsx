@@ -75,6 +75,7 @@ const demoMonthlySavings = Math.max(
 );
 
 const productName = "Policy Lens";
+const scannedFixturePath = "/sample-scanned-policy.pdf";
 
 export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) {
   const isDemoMode = mode === "demo";
@@ -129,14 +130,7 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
     });
   }
 
-  async function handleAnalyzeSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!selectedFile) {
-      setAnalysisError("Choose a policy PDF first, or load the demo scenario.");
-      return;
-    }
-
+  async function analyzePolicyFile(file: File) {
     setIsAnalyzing(true);
     setAnalysisError(null);
     setComparison(null);
@@ -144,7 +138,7 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
 
     try {
       const formData = new FormData();
-      formData.set("file", selectedFile);
+      formData.set("file", file);
 
       const response = await fetch("/api/policies/analyze", {
         method: "POST",
@@ -159,12 +153,49 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
       const nextAnalysis = payload as PolicyAnalysis;
       setAnalysis(nextAnalysis);
       setQuoteForm(buildQuoteFormFromAnalysis(nextAnalysis));
+      return nextAnalysis;
     } catch (error) {
       setAnalysisError(
         error instanceof Error ? error.message : "Something went wrong while analyzing the PDF.",
       );
+      return null;
     } finally {
       setIsAnalyzing(false);
+    }
+  }
+
+  async function handleAnalyzeSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!selectedFile) {
+      setAnalysisError("Choose a policy PDF first, run the scanned sample, or open the live demo.");
+      return;
+    }
+
+    await analyzePolicyFile(selectedFile);
+  }
+
+  async function handleLoadScannedSample() {
+    setAnalysisError(null);
+
+    try {
+      const response = await fetch(scannedFixturePath, { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error("The scanned sample PDF is unavailable right now.");
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], "sample-scanned-policy.pdf", {
+        type: "application/pdf",
+      });
+
+      setSelectedFile(file);
+      await analyzePolicyFile(file);
+    } catch (error) {
+      setAnalysisError(
+        error instanceof Error ? error.message : "The scanned sample could not be loaded right now.",
+      );
     }
   }
 
@@ -560,12 +591,13 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                     {selectedFile ? selectedFile.name : "Choose a policy PDF"}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Best with a searchable declarations PDF. Files stay session-scoped for this MVP.
+                    Searchable PDFs are fastest. Want to test OCR? Run the built-in scanned sample below and watch the
+                    same analysis flow handle an image-based declarations page.
                   </p>
                 </div>
               </label>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <button
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--panel)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--panel-soft)] disabled:cursor-not-allowed disabled:bg-slate-500"
                   disabled={isAnalyzing}
@@ -573,6 +605,15 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 >
                   {isAnalyzing ? "Decoding policy..." : "Decode my policy"}
                   <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--panel)]/14 bg-white px-5 py-3 text-sm font-semibold text-[var(--panel)] transition hover:border-[var(--accent)]/40 hover:bg-[var(--accent-soft)]/45 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                  disabled={isAnalyzing}
+                  type="button"
+                  onClick={handleLoadScannedSample}
+                >
+                  <FileText className="h-4 w-4" />
+                  Try scanned sample
                 </button>
                 <Link className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-105" href="/demo" rel="noreferrer" target="_blank">
                   <Sparkles className="h-4 w-4" />

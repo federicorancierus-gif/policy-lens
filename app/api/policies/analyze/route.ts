@@ -1,8 +1,10 @@
 import { PDFParse } from "pdf-parse";
 
 import { analyzePolicyDocument } from "@/lib/insurance-engine";
+import { extractPdfTextWithOcr, shouldUseOcrFallback } from "@/lib/ocr";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -47,12 +49,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
   let text = "";
   let parseIssue: string | undefined;
   let parser: PDFParse | null = null;
+  let ocrPages = 0;
+  let usedOcr = false;
 
   try {
-    parser = new PDFParse({ data: Buffer.from(await file.arrayBuffer()) });
+    parser = new PDFParse({ data: fileBuffer });
     const result = await parser.getText();
     text = result.text ?? "";
   } catch {
@@ -64,11 +69,39 @@ export async function POST(request: Request) {
     }
   }
 
+  if (shouldUseOcrFallback(text)) {
+    try {
+      const ocrResult = await extractPdfTextWithOcr(fileBuffer);
+
+      if (ocrResult.text.trim()) {
+        text = [text.trim(), ocrResult.text].filter(Boolean).join("\n\n");
+        ocrPages = ocrResult.processedPages;
+        usedOcr = true;
+        parseIssue = undefined;
+      }
+    } catch {
+      if (!text.trim()) {
+        parseIssue =
+          "This PDF appears to be scanned or image-based, and OCR could not recover enough text to summarize it confidently.";
+      }
+    }
+  }
+
   const analysis = analyzePolicyDocument({
     fileName: file.name,
     text,
     parseIssue,
   });
+
+  if (usedOcr) {
+    analysis.extractionNotes.unshift(
+      `OCR reviewed ${ocrPages} page${ocrPages === 1 ? "" : "s"} because the PDF looked scanned or lightly searchable.`,
+    );
+
+    if (analysis.confidence === "high") {
+      analysis.confidence = "medium";
+    }
+  }
 
   return Response.json(analysis);
 }

@@ -284,8 +284,13 @@ function buildCoverageItem(
 
 function findCoverageSnippet(lines: string[], normalizedText: string, aliases: string[]) {
   for (let index = 0; index < lines.length; index += 1) {
-    const currentLine = lines[index].toLowerCase();
-    if (aliases.some((alias) => currentLine.includes(alias.toLowerCase()))) {
+    const currentLine = lines[index];
+    const currentLineLower = currentLine.toLowerCase();
+    if (aliases.some((alias) => currentLineLower.includes(alias.toLowerCase()))) {
+      if (looksLikeCompleteCoverageLine(currentLine)) {
+        return currentLine.trim();
+      }
+
       return [lines[index], lines[index + 1], lines[index + 2]]
         .filter(Boolean)
         .join(" ")
@@ -306,6 +311,14 @@ function findCoverageSnippet(lines: string[], normalizedText: string, aliases: s
   }
 
   return null;
+}
+
+function looksLikeCompleteCoverageLine(line: string) {
+  return (
+    /[:$]/.test(line) ||
+    /\b(included|not included|declined|waived|none|excluded)\b/i.test(line) ||
+    /\d/.test(line)
+  );
 }
 
 function extractCoverageValue(snippet: string, category: CoverageCategory) {

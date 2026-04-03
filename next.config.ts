@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingIncludes: {
+    "/api/policies/analyze": [
+      "./scripts/extract-ocr-text.mjs",
+      "./node_modules/pdf-to-img/**/*",
+      "./node_modules/pdfjs-dist/**/*",
+      "./node_modules/tesseract.js/**/*",
+      "./node_modules/tesseract.js-core/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
