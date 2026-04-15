@@ -9,7 +9,6 @@ import {
   FileText,
   LifeBuoy,
   Scale,
-  ShieldAlert,
   ShieldCheck,
   Sparkles,
   TriangleAlert,
@@ -69,11 +68,6 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 0,
 });
-
-const demoMonthlySavings = Math.max(
-  0,
-  (demoPolicyAnalysis.currentMonthlyPremium ?? 0) - demoComparisonQuote.monthlyPremium,
-);
 
 const productName = "Policy Lens";
 const scannedFixturePath = "/sample-scanned-policy.pdf";
@@ -330,8 +324,7 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
       <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8 lg:px-10 lg:py-10">
         <header className="reveal flex flex-col gap-4 px-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">Insurance clarity, one upload away</p>
-            <h1 className="display-type mt-2 text-3xl leading-tight text-slate-950 sm:text-4xl">
+            <h1 className="display-type text-3xl leading-tight text-slate-950 sm:text-4xl">
               {productName}
             </h1>
           </div>
@@ -353,88 +346,35 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
 
         {isDemoMode ? (
           <section className="reveal reveal-delay-1 glass-panel rounded-[2rem] border border-white/50 px-6 py-6 lg:px-8">
-            <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr] xl:items-center">
-              <div className="max-w-3xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Sample walkthrough</p>
-                <h2 className="display-type mt-3 text-4xl leading-tight text-slate-950 sm:text-5xl">
-                  See how price and protection change side by side.
+            <div className="grid gap-5 xl:grid-cols-[220px_1fr] xl:items-start">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Demo</p>
+                <h2 className="display-type text-4xl leading-tight text-slate-950 sm:text-[3.35rem]">
+                  Compare price and protection.
                 </h2>
-                <p className="mt-4 text-base leading-7 text-slate-700">
-                  This page starts with a realistic sample policy and quote so you can try the product immediately, then
-                  swap in your own numbers and see the comparison update live.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <DemoBeat
-                    step="01"
-                    title="Decode"
-                    body="Turn declarations-page jargon into something a driver can understand in seconds."
-                  />
-                  <DemoBeat
-                    step="02"
-                    title="Spot risk"
-                    body="Surface the moments where thin limits or missing coverage become claim-time regret."
-                  />
-                  <DemoBeat
-                    step="03"
-                    title="Compare"
-                    body="See what gets better, what gets worse, and whether the lower premium is actually worth it."
-                  />
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <PreviewStat label="Policy" value="GEICO sample" />
+                  <PreviewStat label="Delta" value={formatPriceDelta(comparison?.priceDelta ?? demoQuoteComparison.priceDelta)} />
                 </div>
               </div>
 
               <div className="rounded-[1.9rem] border border-[var(--panel)]/12 bg-white/82 p-5 shadow-[0_24px_70px_rgba(12,90,67,0.08)]">
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_188px] lg:items-start">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                      Protection comparison
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-950">
-                      Coverage strength should read clearly at a glance
-                    </p>
-                  </div>
-                  <div className="flex min-h-[132px] flex-col items-center justify-center rounded-[1.5rem] border border-[var(--panel)]/10 bg-[var(--accent-soft)]/28 px-5 py-4 text-center">
-                    <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">
-                      Premium delta
-                    </p>
-                    <p className="mt-3 text-4xl font-semibold leading-none text-slate-950">
-                      {formatPriceDelta(comparison?.priceDelta ?? demoQuoteComparison.priceDelta)}
-                    </p>
-                    <p className="mt-3 text-sm text-slate-600">Monthly savings on the cheaper quote</p>
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <ProtectionMeterCard
-                    currentLabel={demoPolicyAnalysis.carrierName}
-                    comparisonLabel={demoComparisonQuote.carrierName}
-                    currentScore={comparison?.currentProtectionScore ?? demoQuoteComparison.currentProtectionScore}
-                    comparisonScore={comparison?.comparisonProtectionScore ?? demoQuoteComparison.comparisonProtectionScore}
-                  />
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <PreviewStat label="Mode" value="Interactive demo" />
-                  <PreviewStat label="Loaded policy" value="GEICO sample policy" />
-                  <PreviewStat label="Main reveal" value="Price vs protection" />
-                </div>
+                <ProtectionMeterCard
+                  currentLabel={demoPolicyAnalysis.carrierName}
+                  comparisonLabel={demoComparisonQuote.carrierName}
+                  currentScore={comparison?.currentProtectionScore ?? demoQuoteComparison.currentProtectionScore}
+                  comparisonScore={comparison?.comparisonProtectionScore ?? demoQuoteComparison.comparisonProtectionScore}
+                />
               </div>
             </div>
           </section>
         ) : (
         <section className="grid gap-8 lg:grid-cols-[1.04fr_0.96fr] lg:items-start">
-          <div className="space-y-8 pt-2">
-            <div className="reveal reveal-delay-1 space-y-5">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--panel)]/12 bg-white/80 px-4 py-2 text-sm text-slate-700">
-                <Sparkles className="h-4 w-4 text-[var(--accent)]" />
-                Auto insurance explained in plain English
-              </span>
+          <div className="space-y-6 pt-2">
+            <div className="reveal reveal-delay-1 space-y-4">
               <h2 className="display-type max-w-5xl text-5xl leading-[0.92] text-slate-950 sm:text-6xl lg:text-[5.15rem]">
-                Know what you are actually covered for before a claim forces you to.
+                Know your coverage.
               </h2>
-              <p className="max-w-2xl text-lg leading-8 text-slate-700">
-                Upload a policy PDF, decode the legalese, surface the blind spots that matter, and compare whether a
-                cheaper quote is really worth what it strips away.
-              </p>
             </div>
 
             <div className="reveal reveal-delay-2 flex flex-col gap-3 sm:flex-row">
@@ -450,137 +390,18 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 Try live demo
               </Link>
             </div>
-
-            <div className="reveal reveal-delay-2 flex flex-wrap gap-3">
-              <SignalPill tone="warning" text="Low liability detected before claim time" />
-              <SignalPill tone="warning" text="Rental coverage missing from cheaper quote" />
-              <SignalPill tone="neutral" text={`${currencyFormatter.format(demoMonthlySavings)}/mo savings normalized against protection`} />
-            </div>
-
-            <div className="reveal reveal-delay-3 grid gap-4 xl:grid-cols-3">
-              <HeroMetric
-                icon={<FileText className="h-5 w-5" />}
-                title="Policy translation"
-                stat="8 coverage lines decoded"
-                description="From bodily injury liability to rental reimbursement, the tool rewrites dense policy language into something clear and usable."
-              />
-              <HeroMetric
-                icon={<ShieldAlert className="h-5 w-5" />}
-                title="Claim-time surprises"
-                stat="Top 5 blind spots surfaced"
-                description="Low limits, missing UM/UIM, no roadside, and deductible pain get elevated before they become stressful surprises."
-              />
-              <HeroMetric
-                icon={<Scale className="h-5 w-5" />}
-                title="Quote normalization"
-                stat={`${currencyFormatter.format(demoMonthlySavings)}/mo cheaper can still lose`}
-                description="The app turns price-first shopping into a real protection tradeoff conversation instead of a race to the cheapest premium."
-              />
-            </div>
           </div>
 
           <div
             id="upload-panel"
             className="reveal reveal-delay-2 glass-panel-strong rounded-[2rem] border border-white/55 p-6 shadow-[0_24px_80px_rgba(12,90,67,0.14)] lg:p-7"
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Preview first</p>
-                <h3 className="display-type mt-2 text-3xl text-slate-950">See the decoded result before you upload</h3>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                  The live demo below shows the exact kind of output a user gets back: translated coverage, surfaced
-                  risks, and a quote tradeoff that feels concrete.
-                </p>
+                <h3 className="display-type text-3xl text-slate-950">Upload a policy PDF</h3>
               </div>
               <div className="rounded-2xl bg-[var(--panel)] p-3 text-[var(--sun)]">
                 <UploadCloud className="h-6 w-6" />
-              </div>
-            </div>
-
-            <div className="mt-6 overflow-hidden rounded-[1.8rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(232,248,238,0.96))] shadow-[0_18px_50px_rgba(12,90,67,0.08)]">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white/80 px-4 py-3">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-200" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
-                  </div>
-                  <p className="text-sm font-semibold text-slate-700">Decoded policy view</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <PreviewTab active label="Summary" />
-                  <PreviewTab label="Gaps" />
-                  <PreviewTab label="Compare" />
-                </div>
-              </div>
-
-              <div className="space-y-4 p-5">
-                <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
-                  <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/88 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Policy summary</p>
-                        <p className="mt-2 text-xl font-semibold text-slate-950">
-                          {demoPolicyAnalysis.carrierName} policy · {titleCase(demoPolicyAnalysis.confidence)} confidence
-                        </p>
-                      </div>
-                      <div className="rounded-2xl bg-[var(--panel)] px-4 py-3 text-white">
-                        <p className="text-xs uppercase tracking-[0.22em] text-slate-300">Protection score</p>
-                        <p className="mt-2 text-2xl font-semibold">{demoPolicyAnalysis.protectionScore}/100</p>
-                      </div>
-                    </div>
-                    <p className="mt-4 text-sm leading-6 text-slate-700">{demoPolicyAnalysis.plainEnglishSummary}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {demoPolicyAnalysis.coverages.slice(0, 4).map((coverage) => (
-                        <span
-                          key={coverage.type}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
-                        >
-                          {coverage.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[1.5rem] border border-[var(--accent)]/20 bg-[var(--accent)]/7 p-4">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">What the cheaper quote cuts</p>
-                    <p className="mt-3 text-3xl font-semibold text-slate-950">
-                      {currencyFormatter.format(demoMonthlySavings)}/mo cheaper
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      The headline price drops, but so does protection. This is the exact trap the product is built to
-                      explain.
-                    </p>
-                    <div className="mt-4 space-y-2">
-                      <PreviewDelta label="Bodily injury" current="$50k / $100k" next="$25k / $50k" />
-                      <PreviewDelta label="Rental reimbursement" current="Included" next="Removed" />
-                      <PreviewDelta label="Collision deductible" current="$1,000" next="$1,500" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <PreviewStat label="Liability watchout" value="Low limits" />
-                  <PreviewStat label="Hidden cost" value="No rental coverage" />
-                  <PreviewStat label="Biggest tradeoff" value="Cheaper but weaker" />
-                </div>
-
-                <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/88 p-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Claim-time surprises</p>
-                  <div className="mt-3 grid gap-3 md:grid-cols-3">
-                    {demoPolicyAnalysis.gapFlags.slice(0, 3).map((flag) => (
-                      <div key={flag.title} className="rounded-[1.2rem] bg-slate-50 px-3 py-3">
-                        <div className="flex items-center gap-2 text-[var(--accent)]">
-                          <TriangleAlert className="h-4 w-4" />
-                          <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                            {titleCase(flag.severity)}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-slate-700">{flag.title}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -602,10 +423,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 <div>
                   <p className="text-lg font-semibold text-slate-900">
                     {selectedFile ? selectedFile.name : "Choose a policy PDF"}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Searchable PDFs are fastest. Want to test OCR? Run the built-in scanned sample below and watch the
-                    same analysis flow handle an image-based declarations page.
                   </p>
                 </div>
               </label>
@@ -650,9 +467,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
               <div className="rounded-[2rem] bg-[var(--panel)] px-6 py-6 text-white shadow-[0_28px_90px_rgba(12,90,67,0.22)] lg:px-8">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-200/80">
-                      Analysis snapshot
-                    </p>
                     <h3 className="display-type mt-2 text-4xl">{analysis.carrierName}</h3>
                     <p className="mt-2 max-w-2xl text-base leading-7 text-slate-200">
                       {analysis.plainEnglishSummary}
@@ -682,25 +496,21 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                   icon={<ShieldCheck className="h-5 w-5" />}
                   label="Protection score"
                   value={`${analysis.protectionScore}/100`}
-                  body="Higher scores mean stronger normalized protection across the core coverages this MVP inspects."
                 />
                 <ScoreCard
                   icon={<TriangleAlert className="h-5 w-5" />}
                   label="Gap flags"
                   value={String(analysis.gapFlags.length)}
-                  body="The app prioritizes the 3-5 blind spots most likely to surprise a driver at claim time."
                 />
                 <ScoreCard
                   icon={<CarFront className="h-5 w-5" />}
                   label="Vehicles"
                   value={analysis.vehicles[0] ? vehicleLabel(analysis.vehicles[0]) : "Not clearly parsed"}
-                  body="Vehicle detection helps the prototype infer whether missing physical damage coverage is more concerning."
                 />
                 <ScoreCard
                   icon={<BadgeDollarSign className="h-5 w-5" />}
                   label="Best next move"
                   value={analysis.gapFlags[0]?.title ?? "Coverage looks balanced"}
-                  body="This is the strongest story beat for a live demo: show the biggest risk and what GEICO should recommend next."
                 />
               </div>
             </section>
@@ -709,7 +519,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
               <SectionHeader
                 kicker="Coverage breakdown"
                 title="Plain-English policy translation"
-                description="Every major line is normalized into a coverage card so the user can see what is actually included, what looks thin, and what may be missing."
               />
               <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {analysis.coverages.map((coverage) => (
@@ -741,7 +550,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 <SectionHeader
                   kicker="Gap flags"
                   title="Claim-time surprises to highlight"
-                  description="These are the moments where a customer thinks they are protected until a real accident exposes a blind spot."
                 />
                 <div className="mt-6 space-y-4">
                   {analysis.gapFlags.map((flag) => (
@@ -770,7 +578,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                     <SectionHeader
                       kicker="Exclusions and fine print"
                       title="What this policy likely does not protect"
-                      description="Some exclusions are pulled directly from the PDF; others are standard personal auto limitations worth calling out in the product story."
                     />
                     <div className="mt-6 space-y-3">
                       {analysis.exclusions.map((exclusion) => (
@@ -788,7 +595,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                     <SectionHeader
                       kicker="Extraction notes"
                       title="What the parser was confident about"
-                      description="This keeps the prototype honest when the PDF is messy or lightly searchable."
                     />
                     <div className="mt-4 space-y-3">
                       {analysis.extractionNotes.map((note) => (
@@ -806,7 +612,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 <SectionHeader
                   kicker="Quote compare"
                   title="Normalize an alternate quote"
-                  description="Use the controls below to model the quote a shopper is considering and show exactly where lower price starts cutting into real protection."
                 />
 
                 <form className="mt-6 grid gap-4" onSubmit={handleCompareSubmit}>
@@ -964,7 +769,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 <SectionHeader
                   kicker="Comparison output"
                   title="Current policy vs alternate quote"
-                  description="Compare price, protection, and the exact coverage tradeoffs between the two options."
                 />
 
                 {comparison ? (
@@ -1068,10 +872,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                         <Scale className="h-6 w-6" />
                       </div>
                       <p className="mt-5 text-lg font-semibold text-slate-900">Run the comparison to expose the tradeoff</p>
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                        Once you compare, this panel will call out what gets better, what gets worse, and whether the
-                        cheaper quote is truly worth it.
-                      </p>
                     </div>
                   </div>
                 )}
@@ -1083,7 +883,6 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
                 <SectionHeader
                   kicker="Explain like I’m new to insurance"
                   title="Built-in terminology translator"
-                  description="Every key concept gets a plain-English explanation so the product feels educational instead of intimidating."
                 />
                 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   {glossaryCards.map((item) => (
@@ -1302,29 +1101,6 @@ function updateQuoteForm(
   }));
 }
 
-function HeroMetric({
-  icon,
-  title,
-  stat,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  stat: string;
-  description: string;
-}) {
-  return (
-    <div className="glass-panel rounded-[1.8rem] border border-white/45 p-5 transition hover:-translate-y-0.5">
-      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--panel)] text-[var(--sun)]">
-        {icon}
-      </div>
-      <p className="text-lg font-semibold text-slate-950">{title}</p>
-      <p className="mt-3 text-2xl font-semibold leading-tight text-[var(--panel)]">{stat}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
-    </div>
-  );
-}
-
 function SignalPill({
   text,
   tone,
@@ -1344,62 +1120,11 @@ function SignalPill({
   );
 }
 
-function PreviewTab({ label, active = false }: { label: string; active?: boolean }) {
-  return (
-    <span
-      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-        active ? "bg-[var(--panel)] text-white" : "bg-slate-100 text-slate-600"
-      }`}
-    >
-      {label}
-    </span>
-  );
-}
-
-function PreviewDelta({
-  label,
-  current,
-  next,
-}: {
-  label: string;
-  current: string;
-  next: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[1.1rem] bg-white/85 px-3 py-3 text-sm">
-      <div>
-        <p className="font-semibold text-slate-900">{label}</p>
-        <p className="mt-1 text-slate-500">{current}</p>
-      </div>
-      <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
-      <p className="font-semibold text-[var(--accent)]">{next}</p>
-    </div>
-  );
-}
-
 function PreviewStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[1.3rem] border border-slate-200/75 bg-white/88 px-4 py-4">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{label}</p>
       <p className="mt-2 text-lg font-semibold text-slate-950">{value}</p>
-    </div>
-  );
-}
-
-function DemoBeat({
-  step,
-  title,
-  body,
-}: {
-  step: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-[1.4rem] border border-slate-200/70 bg-white/78 px-4 py-4 shadow-[0_12px_34px_rgba(12,90,67,0.05)]">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">{step}</p>
-      <p className="mt-2 text-lg font-semibold text-slate-950">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-700">{body}</p>
     </div>
   );
 }
@@ -1456,9 +1181,6 @@ function ProtectionMeterCard({
               style={{ width: `${Math.max(8, Math.min(100, currentScore))}%` }}
             />
           </div>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Stronger overall protection because liability is higher and rental coverage is still included.
-          </p>
         </div>
 
         <div className="rounded-[1.4rem] border border-slate-200/75 bg-white/92 p-4 shadow-[0_16px_40px_rgba(12,90,67,0.06)]">
@@ -1475,16 +1197,6 @@ function ProtectionMeterCard({
               style={{ width: `${Math.max(8, Math.min(100, comparisonScore))}%` }}
             />
           </div>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Lower price, but weaker overall protection once you normalize deductibles, liability, and optional coverage.
-          </p>
-        </div>
-
-        <div className="rounded-[1.4rem] border border-[var(--accent)]/24 bg-[var(--accent)]/8 p-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Protection takeaway</p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            This chart makes the coverage gap easy to read before price becomes the only thing driving the decision.
-          </p>
         </div>
       </div>
     </div>
@@ -1552,9 +1264,7 @@ function ComparisonSummaryBoard({
     <div className="rounded-[1.75rem] border border-[var(--panel)]/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(232,248,238,0.94))] p-5 shadow-[0_20px_60px_rgba(12,90,67,0.08)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">At a glance</p>
-          <p className="mt-3 text-2xl font-semibold leading-9 text-slate-950">{executiveHeadline}</p>
-          <p className="mt-3 text-sm leading-6 text-slate-700">{comparison.summary}</p>
+          <p className="text-2xl font-semibold leading-9 text-slate-950">{executiveHeadline}</p>
         </div>
         <div className="min-w-[172px] rounded-[1.4rem] bg-[var(--panel)] px-4 py-4 text-right text-white">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-100/80">
@@ -1614,13 +1324,13 @@ function SectionHeader({
 }: {
   kicker: string;
   title: string;
-  description: string;
+  description?: string;
 }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">{kicker}</p>
       <h3 className="display-type mt-2 text-3xl text-slate-950">{title}</h3>
-      <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{description}</p>
+      {description ? <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{description}</p> : null}
     </div>
   );
 }
@@ -1643,7 +1353,7 @@ function ScoreCard({
   icon: React.ReactNode;
   label: string;
   value: string;
-  body: string;
+  body?: string;
 }) {
   return (
     <article className="glass-panel rounded-[1.6rem] border border-white/45 p-5">
@@ -1652,7 +1362,7 @@ function ScoreCard({
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
       </div>
       <p className="mt-5 text-2xl font-semibold text-slate-950">{value}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
+      {body ? <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p> : null}
     </article>
   );
 }
