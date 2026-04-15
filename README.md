@@ -7,6 +7,8 @@ Upload an auto policy PDF and the app will:
 - flag likely gaps like low liability, missing roadside, or no rental reimbursement
 - compare an alternate quote against the current policy on an apples-to-apples basis
 
+If you upload a non-auto policy, the app now stops early and tells you the document type is unsupported instead of forcing it through the auto parser.
+
 ## Stack
 - Next.js 16 App Router
 - React 19

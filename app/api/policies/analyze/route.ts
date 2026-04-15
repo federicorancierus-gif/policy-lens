@@ -1,7 +1,10 @@
-import { PDFParse } from "pdf-parse";
-
 import { analyzePolicyDocument } from "@/lib/insurance-engine";
+import {
+  buildUnsupportedPolicyMessage,
+  detectPolicyDocumentType,
+} from "@/lib/policy-document";
 import { extractPdfTextWithOcr, shouldUseOcrFallback } from "@/lib/ocr";
+import { extractSearchablePdfText } from "@/lib/pdf-text";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -53,21 +56,14 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     let text = "";
     let parseIssue: string | undefined;
-    let parser: PDFParse | null = null;
     let ocrPages = 0;
     let usedOcr = false;
 
     try {
-      parser = new PDFParse({ data: fileBuffer });
-      const result = await parser.getText();
-      text = result.text ?? "";
+      text = await extractSearchablePdfText(fileBuffer);
     } catch {
       parseIssue =
         "The PDF parser could not fully read this file, so the app is falling back to a conservative low-confidence summary.";
-    } finally {
-      if (parser) {
-        await parser.destroy().catch(() => undefined);
-      }
     }
 
     if (shouldUseOcrFallback(text)) {
@@ -88,6 +84,17 @@ export async function POST(request: Request) {
             "This PDF appears to be scanned or image-based, and OCR could not recover enough text to summarize it confidently.";
         }
       }
+    }
+
+    const documentType = detectPolicyDocumentType(text, file.name);
+
+    if (documentType !== "auto" && documentType !== "unknown") {
+      return Response.json(
+        {
+          error: buildUnsupportedPolicyMessage(documentType),
+        },
+        { status: 422 },
+      );
     }
 
     const analysis = analyzePolicyDocument({

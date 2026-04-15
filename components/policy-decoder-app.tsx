@@ -128,6 +128,7 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
   async function analyzePolicyFile(file: File) {
     setIsAnalyzing(true);
     setAnalysisError(null);
+    setAnalysis(null);
     setComparison(null);
     setComparisonError(null);
 
