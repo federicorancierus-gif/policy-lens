@@ -1,4 +1,5 @@
 import { analyzePolicyDocument } from "@/lib/insurance-engine";
+import { enhancePolicyAnalysisWithLlm, isOpenAiPolicyEnhancementEnabled } from "@/lib/openai-policy";
 import {
   buildUnsupportedPolicyMessage,
   detectPolicyDocumentType,
@@ -102,6 +103,34 @@ export async function POST(request: Request) {
       text,
       parseIssue,
     });
+
+    if (isOpenAiPolicyEnhancementEnabled()) {
+      try {
+        const llmResult = await enhancePolicyAnalysisWithLlm({
+          fileName: file.name,
+          text,
+          analysis,
+        });
+
+        if (llmResult.documentType === "homeowners" || llmResult.documentType === "other") {
+          return Response.json(
+            {
+              error: buildUnsupportedPolicyMessage(
+                llmResult.documentType === "homeowners" ? "homeowners" : "unknown",
+              ),
+            },
+            { status: 422 },
+          );
+        }
+
+        Object.assign(analysis, llmResult.analysis);
+      } catch (error) {
+        console.error("LLM enrichment failed", error);
+        analysis.extractionNotes.push(
+          "LLM enrichment was unavailable for this upload, so the app used the deterministic parser only.",
+        );
+      }
+    }
 
     if (usedOcr) {
       analysis.extractionNotes.unshift(

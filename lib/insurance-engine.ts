@@ -54,6 +54,36 @@ export function analyzePolicyDocument(args: {
   };
 }
 
+export function recomputePolicyAnalysis(analysis: PolicyAnalysis): PolicyAnalysis {
+  const gapFlags = buildGapFlags(analysis.coverages, analysis.vehicles);
+  const confidence = calculateConfidence(
+    analysis.textLength,
+    analysis.coverages.filter(
+      (coverage) => coverage.status === "included" || coverage.status === "limited",
+    ).length,
+    analysis.vehicles.length,
+    analysis.extractionNotes.length,
+  );
+  const protectionScore = calculateProtectionScore(analysis.coverages, gapFlags);
+  const plainEnglishSummary =
+    analysis.plainEnglishSummary?.trim() ||
+    buildPlainEnglishSummary(
+      analysis.carrierName,
+      analysis.policyPeriod,
+      analysis.coverages,
+      gapFlags,
+      analysis.vehicles.length,
+    );
+
+  return {
+    ...analysis,
+    gapFlags,
+    confidence,
+    protectionScore,
+    plainEnglishSummary,
+  };
+}
+
 export function compareQuote(
   currentPolicy: PolicyAnalysis,
   currentMonthlyPremium: number,

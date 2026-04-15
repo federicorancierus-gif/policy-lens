@@ -14,6 +14,7 @@ If you upload a non-auto policy, the app now stops early and tells you the docum
 - React 19
 - Tailwind CSS 4
 - `pdf-parse` for searchable PDF text extraction
+- OpenAI Responses API for optional LLM-based extraction enrichment
 - deterministic insurance logic for gap flags and quote comparison
 
 ## What is implemented
@@ -43,6 +44,13 @@ npm install
 npm run dev
 ```
 
+Optional LLM enrichment:
+
+```bash
+OPENAI_API_KEY=your_key_here
+OPENAI_POLICY_MODEL=gpt-4o-mini
+```
+
 Then open [http://localhost:3000](http://localhost:3000).
 
 ## Sample OCR fixture
@@ -58,6 +66,7 @@ npm run generate:ocr-fixture
 - This is an educational prototype, not legal or underwriting advice.
 - The app works best with text-searchable PDFs.
 - If a PDF is image-based or scanned, the app now attempts OCR before falling back to a lower-confidence summary.
+- If `OPENAI_API_KEY` is configured, the app also runs an LLM extraction pass to improve ambiguous carrier, vehicle, coverage, and summary fields.
 - The repo includes a realistic sample scenario so you can try the full experience without a live customer policy.
 
 ## Validation
