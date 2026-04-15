@@ -375,6 +375,9 @@ export function PolicyDecoderApp({ mode = "home" }: { mode?: "home" | "demo" }) 
               <h2 className="display-type max-w-5xl text-5xl leading-[0.92] text-slate-950 sm:text-6xl lg:text-[5.15rem]">
                 Know your coverage.
               </h2>
+              <p className="max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+                Upload your policy to see what is covered, what is missing, and how another quote compares.
+              </p>
             </div>
 
             <div className="reveal reveal-delay-2 flex flex-col gap-3 sm:flex-row">
