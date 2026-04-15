@@ -185,11 +185,11 @@ function buildGapFlags(coverages: CoverageItem[], vehicles: PolicyAnalysis["vehi
   const flags: GapFlag[] = [];
   const coverageMap = buildCoverageSnapshot(coverages);
 
-  const [bodilyInjuryFirst, bodilyInjurySecond] = extractNormalizedAmounts(
+  const [bodilyInjuryFirst, bodilyInjurySecond] = extractLimitAmounts(
     coverageMap.bodilyInjuryLiability.value,
   );
-  const [propertyDamageAmount] = extractNormalizedAmounts(coverageMap.propertyDamageLiability.value);
-  const [collisionDeductible] = extractNormalizedAmounts(coverageMap.collision.value);
+  const [propertyDamageAmount] = extractLimitAmounts(coverageMap.propertyDamageLiability.value);
+  const [collisionDeductible] = extractMoneyAmounts(coverageMap.collision.value);
 
   if (bodilyInjuryFirst > 0 && (bodilyInjuryFirst < 100000 || bodilyInjurySecond < 300000)) {
     flags.push({
@@ -498,7 +498,8 @@ function scoreComparableValue(
     return 0;
   }
 
-  const [first, second] = extractNormalizedAmounts(value);
+  const [first, second] =
+    kind === "limit" ? extractLimitAmounts(value) : extractMoneyAmounts(value);
 
   if (kind === "limit") {
     const primary = first || second;
@@ -545,12 +546,19 @@ function scoreComparableValue(
   return 1;
 }
 
-function extractNormalizedAmounts(value: string) {
+function extractLimitAmounts(value: string) {
   return [...value.matchAll(/\d[\d,]*/g)]
     .map((match) => match[0].replace(/,/g, ""))
     .map((token) => Number.parseInt(token, 10))
     .filter((amount) => Number.isFinite(amount))
     .map((amount) => (amount <= 999 ? amount * 1000 : amount));
+}
+
+function extractMoneyAmounts(value: string) {
+  return [...value.matchAll(/\d[\d,]*/g)]
+    .map((match) => match[0].replace(/,/g, ""))
+    .map((token) => Number.parseInt(token, 10))
+    .filter((amount) => Number.isFinite(amount));
 }
 
 function buildRecommendation(

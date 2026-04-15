@@ -258,25 +258,40 @@ function mergePolicyAnalysis(
   analysis: PolicyAnalysis,
   extraction: LlmPolicyExtraction,
 ): PolicyAnalysis {
+  const nextCarrier =
+    shouldUseLlmString(analysis.carrierName, extraction.carrierName, "Unknown carrier")
+      ? cleanLlmString(extraction.carrierName)
+      : analysis.carrierName;
+  const nextPolicyPeriod =
+    shouldUseLlmString(
+      analysis.policyPeriod,
+      extraction.policyPeriod,
+      "Unable to confirm policy term",
+    )
+      ? cleanLlmString(extraction.policyPeriod)
+      : analysis.policyPeriod;
   const mergedVehicles = mergeVehicles(analysis.vehicles, extraction.vehicles);
   const mergedCoverages = mergeCoverages(analysis.coverages, extraction.coverages);
   const mergedExclusions = mergeExclusions(analysis.exclusions, extraction.exclusions);
   const filledFieldCount = countFilledFields(analysis, mergedVehicles, mergedCoverages, extraction);
+  const candidateSummary = chooseSummary(analysis.plainEnglishSummary, extraction.summary, nextCarrier);
+  const shouldRegenerateSummary =
+    candidateSummary === analysis.plainEnglishSummary &&
+    (nextCarrier !== analysis.carrierName ||
+      nextPolicyPeriod !== analysis.policyPeriod ||
+      mergedVehicles.length !== analysis.vehicles.length ||
+      mergedCoverages.some((coverage, index) => {
+        const previous = analysis.coverages[index];
+        return (
+          previous?.status !== coverage.status ||
+          previous?.limitOrDeductible !== coverage.limitOrDeductible
+        );
+      }));
 
   return recomputePolicyAnalysis({
     ...analysis,
-    carrierName:
-      shouldUseLlmString(analysis.carrierName, extraction.carrierName, "Unknown carrier")
-        ? cleanLlmString(extraction.carrierName)
-        : analysis.carrierName,
-    policyPeriod:
-      shouldUseLlmString(
-        analysis.policyPeriod,
-        extraction.policyPeriod,
-        "Unable to confirm policy term",
-      )
-        ? cleanLlmString(extraction.policyPeriod)
-        : analysis.policyPeriod,
+    carrierName: nextCarrier,
+    policyPeriod: nextPolicyPeriod,
     currentMonthlyPremium:
       typeof extraction.currentMonthlyPremium === "number" &&
       Number.isFinite(extraction.currentMonthlyPremium)
@@ -285,8 +300,7 @@ function mergePolicyAnalysis(
     vehicles: mergedVehicles,
     coverages: mergedCoverages,
     exclusions: mergedExclusions,
-    plainEnglishSummary:
-      chooseSummary(analysis.plainEnglishSummary, extraction.summary, analysis.carrierName),
+    plainEnglishSummary: shouldRegenerateSummary ? "" : candidateSummary,
     extractionNotes: [
       ...analysis.extractionNotes,
       `LLM reviewed the extracted text and clarified ${filledFieldCount} field${
